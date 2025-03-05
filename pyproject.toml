@@ -1,0 +1,24 @@
+[project]
+name = "premiumy-tt"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Constantine Zagorodnyi",email = "constantine2903@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests (>=2.32.3,<3.0.0)",
+    "selenium (>=4.29.0,<5.0.0)",
+    "webdriver-manager (>=4.0.2,<5.0.0)",
+    "faker (>=36.1.1,<37.0.0)",
+    "lxml (>=5.3.1,<6.0.0)",
+    "fake-useragent (>=2.0.3,<3.0.0)",
+    "selenium-wire (>=5.1.0,<6.0.0)",
+    "blinker (>=1.9.0,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
