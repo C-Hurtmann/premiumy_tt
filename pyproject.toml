@@ -14,8 +14,10 @@ dependencies = [
     "faker (>=36.1.1,<37.0.0)",
     "lxml (>=5.3.1,<6.0.0)",
     "fake-useragent (>=2.0.3,<3.0.0)",
+    "cryptography (>=44.0.2,<45.0.0)",
+    "pyopenssl (>=25.0.0,<26.0.0)",
+    "blinker (==1.7.0)",
     "selenium-wire (>=5.1.0,<6.0.0)",
-    "blinker (>=1.9.0,<2.0.0)"
 ]
 
 

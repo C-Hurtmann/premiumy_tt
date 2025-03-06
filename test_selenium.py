@@ -1,4 +1,3 @@
-import os
 import random
 import requests
 import hashlib
@@ -17,7 +16,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from lxml import etree
-from fake_useragent import UserAgent
 
 
 fake = Faker()
@@ -29,33 +27,6 @@ def save_page_source(source: str) -> None:
 
     with open('src.xml', 'wb') as f:
         tree.write(f, pretty_print=True, encoding='utf-8', xml_declaration=True)
-
-
-class EmailManager:
-    base_url: str = 'https://privatix-temp-mail-v1.p.rapidapi.com/request/'
-    headers: dict = {
-        'x-rapidapi-host': 'privatix-temp-mail-v1.p.rapidapi.com',
-        'x-rapidapi-key': 'e5d8f94a11msh0e0b78259340742p11851djsne46a022e76aa'
-    }
-    current_email_address: str
-
-    @classmethod
-    def _get(cls, url: str) -> requests.Response:
-        return requests.get(url, headers=cls.headers)
-
-        
-    @classmethod
-    def create_email_address(cls) -> str:
-        res = cls._get(cls.base_url + 'domains/')
-        email = f'{fake.last_name().lower()}.{fake.first_name().lower()[0]}' + res.json()[0]
-        cls.current_email = email
-        return email
-    
-    @classmethod
-    def get_last_emails(cls):
-        res = cls._get(cls.base_url +  'mail/id/' + hashlib.md5(email.encode()).hexdigest())
-        pprint(res.json())
-
 
 
 with open(Path('proxyscrape_premium_http_proxies.txt')) as f:
@@ -74,7 +45,7 @@ try:
 
     # Main workflow
     print("Get welcome page...")
-    driver.get('https://coinbase.com')
+    driver.get('https://2ip.me/en/')
     wait = WebDriverWait(driver, 30)
     action = ActionChains(driver)
 
