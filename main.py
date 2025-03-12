@@ -1,7 +1,6 @@
-from pathlib import Path
 import random
 import time
-from typing import Callable, Literal, Self
+from typing import Callable, Literal
 from faker import Faker
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
@@ -46,8 +45,9 @@ class FlowControl:
             yield instance
     
         except Exception as e:
-            print('EXCEPCTION')
-            time.sleep(100)
+            print('EXCEPTION OCCURED')
+            with open('page.html', 'w') as f:
+                f.write(instance.driver.page_source)
             raise e
 
         finally:
@@ -83,62 +83,64 @@ class FlowControl:
         self.driver.execute_script(f'window.scrollBy({point_1}, {point_2});')
 
 
-with FlowControl.start_driver() as fc:
-    print('Step 1: Get signup page')
-    fc.go_to(website, close_modal_pages=True)
+if __name__ == '__main__':
+    with FlowControl.start_driver() as fc:
+        print('Step 1: Get signup page')
+        fc.go_to(website, close_modal_pages=True)
 
-    print('Step 2: fill input fields')
-    fc.get_element(By.NAME, 'firstName').send_keys(first_name)
-    fc.get_element(By.NAME, 'lastName').send_keys(last_name)
-    fc.get_element(By.NAME, 'email').send_keys(email)
-    fc.get_element(By.NAME, 'password').send_keys(password)
-    fc.scroll('down')
+        print('Step 2: fill input fields')
+        fc.get_element(By.NAME, 'firstName').send_keys(first_name)
+        fc.get_element(By.NAME, 'lastName').send_keys(last_name)
+        fc.get_element(By.NAME, 'email').send_keys(email)
+        fc.get_element(By.NAME, 'password').send_keys(password)
+        fc.scroll('down')
 
-    print('Step 3: Resolve captcha')
-    fc.get_element(By.CSS_SELECTOR, '.captcha-solver_inner', waiting_time=30).click()
-    submit_button = fc.get_element(
-        By.CSS_SELECTOR, 'button[type="submit"]',
-        waiting_time=160,
-        locator_func=EC.element_to_be_clickable
-    )
+        print('Step 3: Resolve captcha')
+        fc.get_element(By.CSS_SELECTOR, '.captcha-solver_inner', waiting_time=30).click()
+        submit_button = fc.get_element(
+            By.CSS_SELECTOR, 'button[type="submit"]',
+            waiting_time=160,
+            locator_func=EC.element_to_be_clickable
+        )
 
-    print('Step 4: Click submit')
-    now = int(time.time())
-    submit_button.click()
+        print('Step 4: Click submit')
+        now = int(time.time())
+        submit_button.click()
 
-    print('Step 5: Verify account')
-    mid = EmailManager.get_target_message(from_=now)['mid']
-    verification_link = EmailManager.get_verification_link(mid=mid)
-    fc.go_to(verification_link)
-    fc.get_element(
-        By.XPATH, '//a[contains(@href, "signin")]',
-        locator_func=EC.element_to_be_clickable
-    ).click()
+        print('Step 5: Verify account')
+        mid = EmailManager.get_target_message(from_=now)['mid']
+        verification_link = EmailManager.get_verification_link(mid=mid)
+        fc.go_to(verification_link)
+        fc.get_element(
+            By.XPATH, '//a[contains(@href, "signin")]',
+            locator_func=EC.element_to_be_clickable
+        ).click()
 
-    print('Step 6: Sign in')
-    email_field = fc.get_element(By.NAME, 'email')
-    email_field.clear()
-    email_field.send_keys(email)
-    fc.get_element(By.NAME, 'password').send_keys(password)
-    fc.get_element(By.CSS_SELECTOR, '.captcha-solver_inner', waiting_time=30).click()
-    fc.get_element(
-        By.CSS_SELECTOR, 'button[type="submit"]',
-        waiting_time=160,
-        locator_func=EC.element_to_be_clickable
-    ).click()
+        print('Step 6: Sign in')
+        email_field = fc.get_element(By.NAME, 'email')
+        email_field.clear()
+        email_field.send_keys(email)
+        fc.get_element(By.NAME, 'password').send_keys(password)
+        fc.get_element(By.CSS_SELECTOR, '.captcha-solver_inner', waiting_time=30).click()
+        fc.get_element(
+            By.CSS_SELECTOR, 'button[type="submit"]',
+            waiting_time=160,
+            locator_func=EC.element_to_be_clickable
+        ).click()
 
-    print('Step 7: Fill phone number amd submit')
-    fc.get_element(By.CSS_SELECTOR, 'input.PhoneInputInput').send_keys(phone_number)
-    fc.get_element(
-        By.CSS_SELECTOR, 'button[type="submit"]',
-        locator_func=EC.element_to_be_clickable
-    ).click()
-    fc.get_element(By.XPATH, '//span[text()="SMS"]').click()
+        print('Step 7: Fill phone number amd submit')
+        fc.get_element(By.CSS_SELECTOR, 'input.PhoneInputInput').send_keys(phone_number)
+        fc.get_element(
+            By.CSS_SELECTOR, 'button[type="submit"]',
+            locator_func=EC.element_to_be_clickable
+        ).click()
+        fc.get_element(By.XPATH, '//span[text()="SMS"]').click()
 
-    print('Step 8: Check verify phone number title')
-    time.sleep(5)
-    check_element = fc.get_element(By.XPATH, '//p[contains(@class, "styles__Title")]')
-    print(check_element.text)
-    assert check_element.text == 'Verify mobile number'
-    
-    fc.driver.get_screenshot_as_file('success.png')
+        print('Step 8: Check verify phone number title')
+        time.sleep(5)
+        check_element = fc.get_element(By.XPATH, '//p[contains(@class, "styles__Title")]')
+        print(check_element.text)
+        assert check_element.text == 'Verify mobile number'
+        
+        print('SUCCESS')
+        fc.driver.get_screenshot_as_file('success.png')

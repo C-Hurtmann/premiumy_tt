@@ -58,9 +58,5 @@ python main.py
 
 ### 🎯 Expected Result
 
-A screenshot named \`\` should be generated.
-
----
-
-✅ **You’re all set!** 🎉 If you encounter any issues, feel free to check dependencies and retry the steps.
+A screenshot named \`success.png\` should be generated.
 

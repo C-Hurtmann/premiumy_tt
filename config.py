@@ -11,7 +11,7 @@ class Config:
     proxy_host: str = 'proxy.soax.com'
     proxy_port: str = '9000'
     
-
+    # two captcha api key
     two_captcha_api_key: str = '806126af0f402f205c1e49ffc88865f2'
 
     @classmethod
