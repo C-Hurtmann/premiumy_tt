@@ -1,6 +1,7 @@
+from pathlib import Path
 import random
-import re
 import time
+from typing import Callable, Literal, Self
 from faker import Faker
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
@@ -8,115 +9,136 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from lxml import etree
-from chromedriver_autoinstaller import install
+from selenium.webdriver.remote.webelement import WebElement
+import chromedriver_autoinstaller
 from email_manager import EmailManager
-from extention import proxies
-from twocaptcha_extension_python import TwoCaptcha
+from contextlib import contextmanager
+
+from config import Config
 
 
 fake = Faker()
 
 first_name = fake.first_name()
 last_name = fake.last_name()
+email = EmailManager.create_email_address()
+password = 'b8Y$k2xL!eQ@7wZ9'
+phone_number = '087' + str(random.randint(1000000, 9999999))
 
-email_manager = EmailManager(first_name=first_name, last_name=last_name)
-email = email_manager.create_email_address()
-print('EMAIL GENERATED ', email)
-
-username = 'IKUmhvPAcfZzlVIN'
-password = 'mobile;bg;;;'
-endpoint = 'proxy.soax.com'
-port = '9000'
 website = 'https://www.valr.com/en/signup'
 
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument(TwoCaptcha("806126af0f402f205c1e49ffc88865f2").load())
+class FlowControl:
 
-proxies_extension = proxies(username, password, endpoint, port)
+    def __init__(self, driver):
+        self.driver = driver
 
-chrome_options.add_extension(proxies_extension)
+    @classmethod
+    @contextmanager
+    def start_driver(cls):
+        chromedriver_autoinstaller.install()
+        options = Config.setup()
+        instance = cls(
+                driver=webdriver.Chrome(service=Service(ChromeDriverManager().install()),
+                options=options)
+        )
+        try:
+            yield instance
+    
+        except Exception as e:
+            print('EXCEPCTION')
+            time.sleep(100)
+            raise e
 
-chrome = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-wait = WebDriverWait(chrome, 20)
+        finally:
+            instance.driver.quit()
 
-try:
+    def go_to(self, url: str, close_modal_pages: bool = False) -> None:
+        self.driver.get(url)
+        if close_modal_pages:
+            time.sleep(3)
+            starting_page_handle = self.driver.current_window_handle
+            for handle in self.driver.window_handles:
+                if handle != starting_page_handle:
+                    self.driver.switch_to.window(handle)
+                    self.driver.close()
+
+            self.driver.switch_to.window(starting_page_handle)
+
+    def get_element(
+            self,
+            by: By,
+            selector: str,
+            waiting_time: int = 20,
+            locator_func: Callable = EC.presence_of_element_located,
+        ) -> WebElement:
+        if element := WebDriverWait(
+            self.driver, waiting_time
+        ).until(locator_func((by, selector))):
+            return element
+        raise KeyError(f'Selector {selector} not found')
+
+    def scroll(self, direction: Literal['up', 'down']) -> None:
+        point_1, point_2 = (0, 500) if direction == 'down' else (500, 0)
+        self.driver.execute_script(f'window.scrollBy({point_1}, {point_2});')
+
+
+with FlowControl.start_driver() as fc:
     print('Step 1: Get signup page')
-    chrome.get(website)
-    time.sleep(5)
-    starting_page_handle = chrome.current_window_handle
-    for handle in chrome.window_handles:
-        if handle != starting_page_handle:
-            chrome.switch_to.window(handle)
-            chrome.close()
+    fc.go_to(website, close_modal_pages=True)
 
-    chrome.switch_to.window(starting_page_handle)
+    print('Step 2: fill input fields')
+    fc.get_element(By.NAME, 'firstName').send_keys(first_name)
+    fc.get_element(By.NAME, 'lastName').send_keys(last_name)
+    fc.get_element(By.NAME, 'email').send_keys(email)
+    fc.get_element(By.NAME, 'password').send_keys(password)
+    fc.scroll('down')
 
-    print('Step 2: find input fields')
-    first_name_field = wait.until(EC.presence_of_element_located((By.NAME, "firstName")))
-    last_name_field = wait.until(EC.presence_of_element_located((By.NAME, "lastName")))
-    email_address_field = wait.until(EC.presence_of_element_located((By.NAME, "email")))
-    password_field = wait.until(EC.presence_of_element_located((By.NAME, "password")))
-
-    print('Step 3: fill input fields')
-    first_name_field.send_keys(first_name)
-    last_name_field.send_keys(last_name)
-    email_address_field.send_keys(email)
-    password_field.send_keys(password)
-    chrome.execute_script("window.scrollBy(0, 500);")
-
-    print('Step 4: Resolve captcha')
-    WebDriverWait(chrome, 30).until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, ".captcha-solver_inner"))
-    ).click()
-    submit_button = WebDriverWait(chrome, 160).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
+    print('Step 3: Resolve captcha')
+    fc.get_element(By.CSS_SELECTOR, '.captcha-solver_inner', waiting_time=30).click()
+    submit_button = fc.get_element(
+        By.CSS_SELECTOR, 'button[type="submit"]',
+        waiting_time=160,
+        locator_func=EC.element_to_be_clickable
     )
 
-    print('Step 5: Click submit')
+    print('Step 4: Click submit')
     now = int(time.time())
     submit_button.click()
 
-    print('Step 6: Get verification message')
-    mid = email_manager.get_target_message(from_=now)['mid']
-
-    print('Step 7: Get verification link')
-    verification_link = email_manager.get_verification_link(mid=mid)
-    print(verification_link)
-
-    print('Step 8: Verify account')
-    chrome.get(verification_link)
-    wait.until(EC.element_to_be_clickable((By.XPATH, '//a[contains(@href, "signin")]'))).click()
-
-    print('Step 9: Sign in')
-    wait.until(EC.presence_of_element_located((By.NAME, "email"))).send_keys(email)
-    wait.until(EC.presence_of_element_located((By.NAME, "password"))).send_keys(password)
-    WebDriverWait(chrome, 30).until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, ".captcha-solver_inner"))
-    ).click()
-    submit_button = WebDriverWait(chrome, 160).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
+    print('Step 5: Verify account')
+    mid = EmailManager.get_target_message(from_=now)['mid']
+    verification_link = EmailManager.get_verification_link(mid=mid)
+    fc.go_to(verification_link)
+    fc.get_element(
+        By.XPATH, '//a[contains(@href, "signin")]',
+        locator_func=EC.element_to_be_clickable
     ).click()
 
-    print('Step 10: Fill phone number amd submit')
-    phone_number = '087' + str(random.randint(1000000, 9999999))
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input.PhoneInputInput'))).send_keys(phone_number)
-    wait.until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[type='submit']"))
+    print('Step 6: Sign in')
+    email_field = fc.get_element(By.NAME, 'email')
+    email_field.clear()
+    email_field.send_keys(email)
+    fc.get_element(By.NAME, 'password').send_keys(password)
+    fc.get_element(By.CSS_SELECTOR, '.captcha-solver_inner', waiting_time=30).click()
+    fc.get_element(
+        By.CSS_SELECTOR, 'button[type="submit"]',
+        waiting_time=160,
+        locator_func=EC.element_to_be_clickable
     ).click()
-    wait.until(EC.presence_of_element_located((By.XPATH, '//span[text()="SMS"]]'))).click()
 
-    print('Step 11: Check verify phone number title')
-    check_element = wait.until(EC.presence_of_element_located((By.XPATH, '//p[@class="styles__Title-eUrGdR"]')))
+    print('Step 7: Fill phone number amd submit')
+    fc.get_element(By.CSS_SELECTOR, 'input.PhoneInputInput').send_keys(phone_number)
+    fc.get_element(
+        By.CSS_SELECTOR, 'button[type="submit"]',
+        locator_func=EC.element_to_be_clickable
+    ).click()
+    fc.get_element(By.XPATH, '//span[text()="SMS"]').click()
+
+    print('Step 8: Check verify phone number title')
+    time.sleep(5)
+    check_element = fc.get_element(By.XPATH, '//p[contains(@class, "styles__Title")]')
+    print(check_element.text)
     assert check_element.text == 'Verify mobile number'
     
-
-finally:
-    time.sleep(100)
-    parser = etree.HTMLParser(remove_blank_text=True)
-    tree = etree.ElementTree(etree.HTML(chrome.page_source, parser))
-    with open('src.xml', 'wb') as f:
-        tree.write(f, pretty_print=True, encoding='utf-8', xml_declaration=True)
-
-    chrome.quit()
+    fc.driver.get_screenshot_as_file('success.png')
