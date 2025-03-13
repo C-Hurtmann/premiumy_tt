@@ -6,8 +6,9 @@
 
 - **Python**: 3.12
 - **Poetry**: Dependency management tool
-- **Google Chrome**: Required for automation
-
+- **Google Chrome**: Link for download:
+https://drive.google.com/file/d/1PK6g2w3jbs6ekK62c-Y5yvYbIxZ54EKO/view?usp=sharing
+- **.env File**: Put this file and Google Chrome to directory with main.py
 ---
 
 ## 🚀 Installation Steps
