@@ -1,18 +1,23 @@
+import os
+from dotenv import load_dotenv
 from selenium import webdriver
 from twocaptcha_extension_python import TwoCaptcha
 
 from proxy_extension_builder import proxies
 
+
+load_dotenv()
+
 class Config:
     
     # proxy credentials
-    proxy_username: str = 'IKUmhvPAcfZzlVIN'
-    proxy_password: str = 'mobile;bg;;;' 
-    proxy_host: str = 'proxy.soax.com'
-    proxy_port: str = '9000'
+    proxy_username: str = os.getenv('PROXY_USERNAME')
+    proxy_password: str = os.getenv('PROXY_PASSWORD')
+    proxy_host: str = os.getenv('PROXY_HOST')
+    proxy_port: str = os.getenv('PROXY_PORT')
     
     # two captcha api key
-    two_captcha_api_key: str = '806126af0f402f205c1e49ffc88865f2'
+    two_captcha_api_key: str = os.getenv('TWO_CAPTCHA_API_KEY')
 
     @classmethod
     def setup(cls) -> webdriver.ChromeOptions:

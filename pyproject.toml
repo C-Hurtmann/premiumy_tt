@@ -24,6 +24,7 @@ dependencies = [
     "chromedriver-autoinstaller (>=0.6.4,<0.7.0)",
     "twocaptcha-extension-python (>=1.0.1,<2.0.0)",
     "beautifulsoup4 (>=4.13.3,<5.0.0)",
+    "python-dotenv (>=1.0.1,<2.0.0)",
 ]
 
 

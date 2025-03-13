@@ -34,6 +34,7 @@ class EmailManager:
             print('STATUS', res.status_code, res.json())
             if messages := res.json()['messages']:
                 target_message = [message for message in messages if 'VALR' in message['textFrom']][0]
+                print('MESSAGE FOUND', target_message)
                 return target_message
             else:
                 sleep(10)

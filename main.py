@@ -1,3 +1,4 @@
+import argparse
 import random
 import time
 from typing import Callable, Literal
@@ -18,11 +19,6 @@ from config import Config
 
 fake = Faker()
 
-first_name = fake.first_name()
-last_name = fake.last_name()
-email = EmailManager.create_email_address()
-password = 'b8Y$k2xL!eQ@7wZ9'
-phone_number = '087' + str(random.randint(1000000, 9999999))
 
 website = 'https://www.valr.com/en/signup'
 
@@ -83,7 +79,8 @@ class FlowControl:
         self.driver.execute_script(f'window.scrollBy({point_1}, {point_2});')
 
 
-if __name__ == '__main__':
+def main(first_name, last_name, email, phone_number):
+    password = 'b8Y$k2xL!eQ@7wZ9'
     with FlowControl.start_driver() as fc:
         print('Step 1: Get signup page')
         fc.go_to(website, close_modal_pages=True)
@@ -144,3 +141,24 @@ if __name__ == '__main__':
         
         print('SUCCESS')
         fc.driver.get_screenshot_as_file('success.png')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Script with arguments')
+    parser.add_argument('--phone', type=str, help='Enter phone without country code (+359). Try number starts with 087')
+    args = parser.parse_args()
+
+    first_name = fake.first_name()
+    last_name = fake.last_name()
+    email = EmailManager.create_email_address()
+    if args.phone:
+        phone_number = args.phone
+    else:
+        phone_number =  '087' + str(random.randint(1000000, 9999999))
+        
+    main(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        phone_number=phone_number
+    )
