@@ -56,6 +56,11 @@ source .venv/bin/activate
 ```bash
 python main.py
 ```
+#### Or if you want to use your own phone number
+
+```bash
+python main.py --phone <your phone number>
+```
 
 ### 🎯 Expected Result
 
